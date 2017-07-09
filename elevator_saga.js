@@ -11,7 +11,7 @@
                 // outside press is a static member of this class, as all elevators share the same information
                 FloorIndex.outside_press = new Uint32Array(floors.length); // contains timestamp if pressed, 0 if not.
                 this.inside_press = new Uint32Array(floors.length);
-                this.floor_index = new Uint8Array(floors.length);
+                this.floor_index = new Uint32Array(floors.length);
             }
 
             add_inside_press(floor)
@@ -42,17 +42,21 @@
                 var self = this;
                 _.each(this.floor_index, function(fl_index, floor_number) {
 
-                    var time_diff = 0;
-                    if (FloorIndex.outside_press[floor_number] != 0)
-                        time_diff = (Date.now() / 1000) - FloorIndex.outside_press[floor_number];
-
                     var outside_val = 0;
-                    if (FloorIndex.outside_press[floor_number] != 0)
+                    var outside_time_diff = 0;
+                    if (FloorIndex.outside_press[floor_number] != 0 && elevator.loadFactor() < 1) // outside button pressed and elevator is not full
+                    {
+                        outside_time_diff = (Date.now() / 1000) - FloorIndex.outside_press[floor_number];
                         outside_val = 1;
+                    }
 
                     var inside_val = 0;
+                    var inside_time_diff = 0;
                     if (self.inside_press[floor_number] != 0)
-                        inside_val = 14;
+                    {
+                        inside_val = 20;
+                        inside_time_diff = (Date.now() / 1000) - self.inside_press[floor_number];
+                    }
 
                     var distance = Math.abs(floor_number - elevator.currentFloor()); // how many floors am I away?
                     // favor closer floors
@@ -63,7 +67,7 @@
                         self.floor_index[floor_number] = 0;
                     } else
                     {
-                        self.floor_index[floor_number] = (time_diff + inside_val); // index will be seconds since outside button was pressed plus 0 / 1 if inside button is pressed.
+                        self.floor_index[floor_number] = (Math.pow(outside_time_diff, 2) + Math.pow(inside_time_diff, 2)) * distance_score; // index will be seconds since outside button was pressed plus 0 / 1 if inside button is pressed.
                     }
                 });
             }

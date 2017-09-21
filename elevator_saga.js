@@ -67,7 +67,11 @@
                         self.floor_index[floor_number] = 0;
                     } else
                     {
-                        self.floor_index[floor_number] = (Math.pow(outside_time_diff, 2) + Math.pow(inside_time_diff, 2)) * distance_score; // index will be seconds since outside button was pressed plus 0 / 1 if inside button is pressed.
+                        if (inside_time_diff == 0)
+                            distance_score = 0;
+
+
+                        self.floor_index[floor_number] = (Math.pow(outside_time_diff, 1) + Math.pow(inside_time_diff + 0.9 * distance_score, 2)) ; // index will be seconds since outside button was pressed plus 0 / 1 if inside button is pressed.
                     }
                 });
             }
@@ -79,11 +83,11 @@
                 return _.indexOf(this.floor_index, _.max(this.floor_index));
             }
         };
-        
+
         _.each(elevators, function(elevator) {
             // every elevator will have its own index.
             var fl_index = new FloorIndex();
-            
+
             elevator.on("idle", function() {
                 var floor = fl_index.get_highest_index_floor(this);
                 this.goToFloor(floor);
@@ -102,7 +106,7 @@
                 last_pressed_floors = this.getPressedFloors();
             });
         });
-        
+
         _.each(floors, function(floor) {
             floor.on("up_button_pressed", function() {
                 FloorIndex.add_outside_press(this.level);
@@ -112,9 +116,9 @@
             });
 
         });
-        
+
     },
-    update: function(dt, elevators, floors) {
-        // We normally don't need to do anything here
-    }
+        update: function(dt, elevators, floors) {
+            // We normally don't need to do anything here
+        }
 }
